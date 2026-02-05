@@ -36,8 +36,7 @@ void GPIO_Config(){
 
 
 	GPIOD->MODER = (uint32_t)0x55000000;
-	//GPIOD->OTYPER = (uint32_t)0x00000009;
-	GPIOD->OSPEEDR = (uint32_t)0x000000C3;
+	GPIOD->OSPEEDR = (uint32_t)0XFF000000;
 }
 
 void EXTI_Config(){
@@ -57,31 +56,43 @@ void EXTI_Config(){
 
 }
 
-void delay(uint32_t n){
+void delay(volatile uint32_t n){
 	while(n--);
 }
 
 void EXTI0_IRQHandler(){
 	if (EXTI->PR & 0x00000001) {
-		GPIOD->ODR = (uint32_t)0x00001000;
-		delay(3360000);
+		for (int a = 0; a < 5; ++a) {
+			GPIOD->ODR = (uint32_t)0x00001000;
+			delay(1680000);
+			GPIOD->ODR = (uint32_t)0x00000000;
+			delay(1680000);
+		}
 		EXTI->PR = (uint32_t)0x00000001;
 	}
 }
 
 void EXTI1_IRQHandler(){
-	if (EXTI->PR & 0x00000010) {
-		GPIOD->ODR = (uint32_t)0x00002000;
-		delay(3360000);
-		EXTI->PR = (uint32_t)0x00000010;
+	if (EXTI->PR & 0x00000002) {
+		for (int a = 0; a < 5; ++a) {
+			GPIOD->ODR = (uint32_t)0x00002000;
+			delay(1680000);
+			GPIOD->ODR = (uint32_t)0x00000000;
+			delay(1680000);
+		}
+		EXTI->PR = (uint32_t)0x00000002;
 	}
 }
 
 void EXTI2_IRQHandler(){
-	if (EXTI->PR & 0x00000011) {
-		GPIOD->ODR = (uint32_t)0x00004000;
-		delay(3360000);
-		EXTI->PR = (uint32_t)0x00000011;
+	if (EXTI->PR & 0x00000003) {
+		for (int a = 0; a < 5; ++a) {
+			GPIOD->ODR = (uint32_t)0x00004000;
+			delay(1680000);
+			GPIOD->ODR = (uint32_t)0x00000000;
+			delay(1680000);
+		}
+		EXTI->PR = (uint32_t)0x00000003;
 	}
 }
 
@@ -95,7 +106,7 @@ int main(void)
 
   while (1)
   {
-	  GPIOD->ODR = (uint32_t)0x0000F0000;
+	  GPIOD->ODR = (uint32_t)0x0000F000;
 
 
   }
