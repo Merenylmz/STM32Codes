@@ -1,6 +1,8 @@
 #include "main.h"
 #include "stm32f4xx.h"
 
+
+volatile uint8_t adcValue;
 void RCC_Config(void){
 	RCC->CR &= ~(1 << 0); //HSI OFF
 	RCC->CR |= 1 << 16; // HSE ON
@@ -11,7 +13,6 @@ void RCC_Config(void){
 	RCC->PLLCFGR &= ~(1<<1);*/
 	RCC->PLLCFGR |= 1 << 22; // PLL Source HSE
 	RCC->PLLCFGR |= 1 << 2;// PLL_M
-	// iki şekildede yapılabilir burada decimal olan 168 i register a binary olarak aktarır. diğerinde ise amaç 8 yazmaktı 2 üzeri 3ten onuda hallettik kısaca direk binary verdik
 	RCC->PLLCFGR |= 168 << 6; //PLL_N
 
 	RCC->CFGR |= (5 << 10);
@@ -32,16 +33,39 @@ void RCC_Config(void){
 }
 
 void GPIO_Config(){
-	RCC->AHB1ENR = (uint32_t)0x00000009;
+	RCC->AHB1ENR |= (uint32_t)0x00000009;
 
-
+	GPIOA->MODER |= (uint32_t)0x00000003;
+	GPIOA->OSPEEDR |= 0x00000003;
 	GPIOD->MODER = (uint32_t)0x55000000;
 	GPIOD->OSPEEDR = (uint32_t)0XFF000000;
 }
 
 void ADC_Config(){
+	RCC->APB2ENR |= 0x00000100;
+
+	ADC1->CR1 |= (uint32_t)0x02000000;
+	ADC1->CR2 |= (uint32_t)0x00000001;
+	ADC1->SMPR2 |= (uint32_t)0x00000003;
+
+	ADC->CCR |= (uint32_t)0x00010000;
 
 }
+
+uint8_t Read_ADC(){
+	ADC1->CR2 |= (uint32_t)0x40000000;
+
+	while(!(ADC1->SR & 0x00000002));
+
+	return (uint8_t)ADC1->DR;
+}
+
+
+void delay(volatile uint32_t n){
+	while(n--);
+}
+
+
 
 
 int main(void)
@@ -49,11 +73,19 @@ int main(void)
 	RCC_Config();
 	SystemCoreClockUpdate();
 	GPIO_Config();
+	ADC_Config();
 
 
   while (1)
   {
+	  adcValue = Read_ADC();
+	  if(adcValue < 50){
+		  GPIOD->ODR |= 1 << 12;
+	  } else {
+		  GPIOD->ODR &= ~(1 << 12);
+	  }
 
+	  delay(10000);
   }
 }
 

@@ -1,0 +1,6 @@
+../Core/Src/main.c:6:6:RCC_Config	4
+../Core/Src/main.c:35:6:GPIO_Config	1
+../Core/Src/main.c:44:6:ADC_Config	1
+../Core/Src/main.c:55:9:Read_ADC	2
+../Core/Src/main.c:64:6:delay	2
+../Core/Src/main.c:71:5:main	2
