@@ -1,9 +1,9 @@
 
 #include "main.h"
 
-TIM_HandleTypeDef htim2;
 
-uint16_t count;
+TIM_HandleTypeDef htim2;
+uint16_t counter;
 
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
@@ -21,22 +21,20 @@ int main(void)
   MX_TIM2_Init();
 
   HAL_TIM_Base_Start(&htim2);
-
   while (1)
   {
-    /* USER CODE END WHILE */
-	  count = __HAL_TIM_GetCounter(&htim2);
-
-
-    /* USER CODE BEGIN 3 */
+	  counter = __HAL_TIM_GetCounter(&htim2);
+	  if (counter % 2 == 0) {
+	  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, SET);
+		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, RESET);
+	}else {
+		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, SET);
+				HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, RESET);
+	}
   }
-  /* USER CODE END 3 */
+
 }
 
-/**
-  * @brief System Clock Configuration
-  * @retval None
-  */
 void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
