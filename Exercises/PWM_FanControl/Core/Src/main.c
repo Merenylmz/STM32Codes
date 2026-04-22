@@ -2,8 +2,11 @@
 #include "main.h"
 void SystemClock_Config(void);
 
-volatile uint32_t adcValue, ccrValue, deneme; // potans degeri
+volatile uint32_t adcValue, ccrValue;
 volatile short i = 1;
+volatile uint8_t fadeMode = 0;
+volatile int fadeValue = 0;
+volatile int fadeDirection = 1;
 
 void RCC_Config(){
 	RCC->CR |= 0x01010000;
@@ -30,13 +33,19 @@ void GPIO_Config(){
 
 	GPIOA->MODER |= 3 << 0;
 
-	//For The Button
+	//For The Hz Button
 	GPIOA->MODER &= ~(3 << 2);
 	GPIOA->PUPDR &= ~(3 << 2);
 	GPIOA->PUPDR |= 2 << 2;
+
+	//For The Fade Effect Button
+	GPIOA->MODER &= ~(3 << 4);
+	GPIOA->PUPDR &= ~(3 << 4);
+	GPIOA->PUPDR |= 2 << 4;
+
 }
 
-void TIM_Config(){
+void TIM4_Config(){
 	RCC->APB1ENR |= 0x00000004;
 
 	TIM4->PSC = 83;
@@ -45,10 +54,22 @@ void TIM_Config(){
 	TIM4->CCMR1 |= (1 << 3);
 	TIM4->CCER |= 1 << 0 | 1 << 4 | 1 << 8 | 1 << 12;
 
-	TIM4->CCR1 |= 999; // baslangic degeri
+	TIM4->CCR1 = 999; // baslangic degeri
 
 	TIM4->EGR |= 1 << 0;
 	TIM4->CR1 |= 1 << 0;
+}
+
+void TIM2_Config(){
+	RCC->APB1ENR |= (1 << 0);
+
+	TIM2->PSC = 8399;
+	TIM2->ARR = 99;
+
+	TIM2->DIER |= (1 << 0);
+	NVIC_EnableIRQ(TIM2_IRQn);
+
+	TIM2->CR1 |= (1 << 0);
 }
 
 void ADC_Config(){
@@ -77,6 +98,28 @@ void updatePWMFrequency(int val){
 	TIM4->PSC = val;
 }
 
+void TIM2_IRQHandler(){
+	if (fadeMode == 1) {
+		if (fadeDirection == 1) {
+			fadeValue += 10;
+			if (fadeValue >= 999) {
+				fadeValue = 999;
+				fadeDirection = 0;
+			}
+		}
+		else {
+			fadeValue -= 10;
+			if (fadeValue <= 0) {
+				fadeValue = 0;
+				fadeDirection = 1;
+			}
+		}
+
+		TIM4->CCR1 = fadeValue;
+	}
+	TIM2->SR &= ~(1 << 0);
+}
+
 int main(void)
 {
 
@@ -85,14 +128,15 @@ int main(void)
 
 	RCC_Config();
 	GPIO_Config();
-	TIM_Config();
+	TIM4_Config();
+	TIM2_Config();
 	ADC_Config();
 
   while (1)
   {
-	  deneme = TIM4->PSC;
 	  if (GPIOA->IDR & (1 << 1)) {
-		  millis();
+		  delay(50000);
+		  if (GPIOA->IDR & (1 << 1)) {
 		  ++i;
 		  switch (i) {
 			case 1: updatePWMFrequency(167); break;
@@ -102,15 +146,34 @@ int main(void)
 				updatePWMFrequency(83);
 				break;
 		}
+		  while (GPIOA->IDR & (1 << 1));
+		 delay(60000);
+	  }
 	}
-	  adcValue = readADC();
-	  ccrValue = (adcValue*999)/4095;
-	  TIM4->CCR1 = ccrValue;
+	  if (GPIOA->IDR & (1 << 2)) {
+		  delay(50000);
+		  if (GPIOA->IDR & (1 << 2)) {
+
+			  if (fadeMode == 0) {fadeMode=1;}
+			  else {fadeMode = 0;}
+
+			  while (GPIOA->IDR & (1 << 2));
+			 delay(60000);
+		  }
+	}
+
+	  if (fadeMode == 0) {
+		  adcValue = readADC();
+		  ccrValue = (adcValue*999)/4095;
+		  TIM4->CCR1 = ccrValue;
+	}
+
 
 	  delay(50000);
   }
 
 }
+
 
 void SystemClock_Config(void)
 {
