@@ -31,7 +31,7 @@ void updatePWMFrequency(uint32_t val) {
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
     if (htim->Instance == TIM2)
-    {
+    {n
         if (fadeMode == 1)
         {
             if (fadeDirection == 1) {
