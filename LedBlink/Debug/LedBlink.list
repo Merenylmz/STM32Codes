@@ -275,9 +275,6 @@ void GPIO_Config(void){
  800031a:	f04f 427f 	mov.w	r2, #4278190080	@ 0xff000000
  800031e:	609a      	str	r2, [r3, #8]
 
-
-
-
 }
  8000320:	bf00      	nop
  8000322:	46bd      	mov	sp, r7
